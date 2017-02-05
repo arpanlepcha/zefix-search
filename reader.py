@@ -30,7 +30,11 @@ class Reader(object):
             fi_reader = csv.DictReader(fi, fieldnames=self.fi_fieldnames, delimiter='\t')
 
             for row in fi_reader:
-                data[row['id']] = {'zefix': row['zefix'].strip(), 'uid': row['uid'].strip()}
+                data[row['id']] = {
+                    'zefix': row['zefix'].strip(), 'uid': row['uid'].strip(),
+                    'house_no': format_unicode(row['house_no']), 'street': format_unicode(row['strasse']),
+                    'zip': row['zip'], 'place': format_unicode(row['place_name'])
+                }
 
             with gzip.open(self.fb_file, 'r') as fb:
                 fb_reader = csv.DictReader(fb, fieldnames=self.fb_fieldnames, delimiter='\t')
@@ -41,12 +45,14 @@ class Reader(object):
                     if zefix is None:
                         continue
 
-                    name = unicode(row['name'], 'ISO-8859-1')
+                    name = format_unicode(row['name'])
                     keys.append(name.lower())
-
-                    values.append(
-                        json.dumps({'zefix': zefix['zefix'], 'name': name, 'uid': zefix['uid']})
-                    )
+                    zefix['name'] = name
+                    values.append(json.dumps(zefix))
 
                 trie = marisa_trie.BytesTrie(zip(keys, values))
                 trie.save(file_path('zefix.ds'))
+
+
+def format_unicode(string):
+    return  unicode(string.strip(), 'ISO-8859-1')
