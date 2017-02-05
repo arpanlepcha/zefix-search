@@ -20,14 +20,12 @@ class ZefixFetcher(object, FtpMixin):
     def fetch_records(self):
         files = self.client.nlst()
         threads = []
-        downloaded_files = []
+        downloaded_files = [file for file in files if self.match_file(file)]
 
-        for file in files:
-            if self.match_file(file):
-                downloader = Async(file)
-                threads.append(downloader)
-                downloader.start()
-                downloaded_files.append(file)
+        for file in downloaded_files:
+            downloader = Async(file)
+            threads.append(downloader)
+            downloader.start()
 
         for thread in threads:
             thread.join()
